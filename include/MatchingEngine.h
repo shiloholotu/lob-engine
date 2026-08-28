@@ -14,7 +14,7 @@ struct Trade {
 
 class MatchingEngine {
 public:
-    std::vector<Trade> submit(Order order); // an incoming order can produce several fills
+    std::vector<Trade> submit(Order order); // an incoming order can produce several fills. Takes and modifies a copy so caller's order is unchanged
     bool cancel(OrderId id);
 
     const OrderBook& book() const { return book_; } // peek at the book without modifying it
