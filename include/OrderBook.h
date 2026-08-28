@@ -18,6 +18,13 @@ public:
     void add(const Order& order); // pass by reference, unable to modify
     bool cancel(OrderId id); // pass by value, OrderId is just a uint64_t alias
 
+    // pointer to the first order in the deque, or nullptr if the deque is empty
+    Order* bestBidFront();
+    Order* bestAskFront();
+
+    void popBestBid();
+    void popBestAsk();
+
     std::optional<Price> bestBid() const; // const means the method does not modify the object
     std::optional<Price> bestAsk() const;
 
