@@ -151,3 +151,22 @@ TEST(Matching, PriceTimePriorityFifo) {
     EXPECT_EQ(ask->quantity, 2);
 }
 
+TEST(Matching, BestBidAskAfterInsertsAndCancels) {
+    MatchingEngine engine;
+    engine.submit(limitBuy(1, 100, 10));
+    engine.submit(limitBuy(2, 105, 10));
+    engine.submit(limitSell(3, 110, 10));
+
+    ASSERT_TRUE(engine.book().bestBid().has_value());
+    EXPECT_EQ(*engine.book().bestBid(), 105);
+    ASSERT_TRUE(engine.book().bestAsk().has_value());
+    EXPECT_EQ(*engine.book().bestAsk(), 110);
+
+    EXPECT_TRUE(engine.cancel(2));
+    ASSERT_TRUE(engine.book().bestBid().has_value());
+    EXPECT_EQ(*engine.book().bestBid(), 100);
+
+    EXPECT_TRUE(engine.cancel(3));
+    EXPECT_FALSE(engine.book().bestAsk().has_value());
+}
+
