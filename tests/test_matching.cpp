@@ -102,3 +102,16 @@ TEST(Matching, MultiLevelStopsAtLimit) {
     EXPECT_EQ(ask->quantity, 4);
 }
 
+TEST(Matching, CancelRestingThenIncomingRests) {
+    MatchingEngine engine;
+    engine.submit(limitSell(1, 100, 10));
+    EXPECT_TRUE(engine.cancel(1));
+    EXPECT_FALSE(engine.book().bestAsk().has_value());
+
+    auto trades = engine.submit(limitBuy(2, 100, 10));
+    EXPECT_TRUE(trades.empty());
+    ASSERT_TRUE(engine.book().bestBid().has_value());
+    EXPECT_EQ(*engine.book().bestBid(), 100);
+    EXPECT_FALSE(engine.book().bestAsk().has_value());
+}
+
