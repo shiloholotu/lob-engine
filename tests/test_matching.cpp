@@ -76,3 +76,29 @@ TEST(Matching, MultiLevelCross) {
     EXPECT_EQ(ask->quantity, 2);
 }
 
+TEST(Matching, MultiLevelStopsAtLimit) {
+    MatchingEngine engine;
+    engine.submit(limitSell(10, 101, 4));
+    engine.submit(limitSell(11, 102, 4));
+    auto trades = engine.submit(limitBuy(20, 101, 6));
+
+    ASSERT_EQ(trades.size(), 1u);
+    EXPECT_EQ(trades[0].maker_id, 10);
+    EXPECT_EQ(trades[0].price, 101);
+    EXPECT_EQ(trades[0].quantity, 4);
+
+    ASSERT_TRUE(engine.book().bestBid().has_value());
+    EXPECT_EQ(*engine.book().bestBid(), 101);
+    const Order* bid = engine.book().bestBidFront();
+    ASSERT_NE(bid, nullptr);
+    EXPECT_EQ(bid->id, 20);
+    EXPECT_EQ(bid->quantity, 2);
+
+    ASSERT_TRUE(engine.book().bestAsk().has_value());
+    EXPECT_EQ(*engine.book().bestAsk(), 102);
+    const Order* ask = engine.book().bestAskFront();
+    ASSERT_NE(ask, nullptr);
+    EXPECT_EQ(ask->id, 11);
+    EXPECT_EQ(ask->quantity, 4);
+}
+
