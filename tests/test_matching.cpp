@@ -115,3 +115,12 @@ TEST(Matching, CancelRestingThenIncomingRests) {
     EXPECT_FALSE(engine.book().bestAsk().has_value());
 }
 
+TEST(Matching, CancelAlreadyFilledOrUnknown) {
+    MatchingEngine engine;
+    engine.submit(limitSell(1, 100, 10));
+    engine.submit(limitBuy(2, 100, 10));
+
+    EXPECT_FALSE(engine.cancel(1));
+    EXPECT_FALSE(engine.cancel(999));
+}
+
