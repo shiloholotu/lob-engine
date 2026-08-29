@@ -124,3 +124,12 @@ TEST(Matching, CancelAlreadyFilledOrUnknown) {
     EXPECT_FALSE(engine.cancel(999));
 }
 
+TEST(Matching, MarketAgainstEmptyBook) {
+    MatchingEngine engine;
+    auto trades = engine.submit(marketBuy(1, 10));
+
+    EXPECT_TRUE(trades.empty());
+    EXPECT_FALSE(engine.book().bestBid().has_value());
+    EXPECT_FALSE(engine.book().bestAsk().has_value());
+}
+
