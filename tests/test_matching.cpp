@@ -206,3 +206,23 @@ TEST(Matching, PriceImprovementUsesMakerPrice) {
     EXPECT_FALSE(engine.book().bestAsk().has_value());
 }
 
+TEST(Matching, SellWalksBidsBestFirst) {
+    MatchingEngine engine;
+    engine.submit(limitBuy(1, 102, 3));
+    engine.submit(limitBuy(2, 100, 10));
+    auto trades = engine.submit(limitSell(3, 100, 5));
+
+    ASSERT_EQ(trades.size(), 2u);
+    EXPECT_EQ(trades[0].maker_id, 1);
+    EXPECT_EQ(trades[0].price, 102);
+    EXPECT_EQ(trades[0].quantity, 3);
+    EXPECT_EQ(trades[1].maker_id, 2);
+    EXPECT_EQ(trades[1].price, 100);
+    EXPECT_EQ(trades[1].quantity, 2);
+
+    const Order* bid = engine.book().bestBidFront();
+    ASSERT_NE(bid, nullptr);
+    EXPECT_EQ(bid->id, 2);
+    EXPECT_EQ(bid->quantity, 8);
+    EXPECT_FALSE(engine.book().bestAsk().has_value());
+}
