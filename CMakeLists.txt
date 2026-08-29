@@ -21,7 +21,12 @@ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
 enable_testing()
-add_executable(lob_tests tests/test_smoke.cpp)
+add_executable(lob_tests
+    tests/test_smoke.cpp
+    tests/test_orderbook.cpp
+    src/OrderBook.cpp
+)
+target_include_directories(lob_tests PRIVATE include)
 target_link_libraries(lob_tests PRIVATE GTest::gtest GTest::gtest_main)
 include(GoogleTest)
 gtest_discover_tests(lob_tests)
