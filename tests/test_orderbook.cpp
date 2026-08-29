@@ -49,3 +49,7 @@ TEST(OrderBook, CancelMovesFifoFront) {
     EXPECT_EQ(front->id, 2);
 }
 
+TEST(OrderBook, CancelUnknownId) {
+    OrderBook book;
+    EXPECT_FALSE(book.cancel(999));
+}
