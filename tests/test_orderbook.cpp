@@ -27,3 +27,13 @@ TEST(OrderBook, BestBidIsHighestPrice) {
     EXPECT_EQ(*book.bestBid(), 105);
 }
 
+TEST(OrderBook, SamePriceFifo) {
+    OrderBook book;
+    book.add(sell(1, 101, 5));
+    book.add(sell(2, 101, 5));
+
+    Order* front = book.bestAskFront();
+    ASSERT_NE(front, nullptr);
+    EXPECT_EQ(front->id, 1);
+}
+
