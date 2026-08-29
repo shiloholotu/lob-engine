@@ -170,3 +170,15 @@ TEST(Matching, BestBidAskAfterInsertsAndCancels) {
     EXPECT_FALSE(engine.book().bestAsk().has_value());
 }
 
+TEST(Matching, MarketLeftoverDropped) {
+    MatchingEngine engine;
+    engine.submit(limitSell(1, 100, 4));
+    auto trades = engine.submit(marketBuy(2, 10));
+
+    ASSERT_EQ(trades.size(), 1u);
+    EXPECT_EQ(trades[0].maker_id, 1);
+    EXPECT_EQ(trades[0].quantity, 4);
+    EXPECT_FALSE(engine.book().bestBid().has_value());
+    EXPECT_FALSE(engine.book().bestAsk().has_value());
+}
+
