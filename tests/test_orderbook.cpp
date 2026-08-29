@@ -37,3 +37,15 @@ TEST(OrderBook, SamePriceFifo) {
     EXPECT_EQ(front->id, 1);
 }
 
+TEST(OrderBook, CancelMovesFifoFront) {
+    OrderBook book;
+    book.add(sell(1, 101, 5));
+    book.add(sell(2, 101, 5));
+
+    EXPECT_TRUE(book.cancel(1));
+
+    Order* front = book.bestAskFront();
+    ASSERT_NE(front, nullptr);
+    EXPECT_EQ(front->id, 2);
+}
+
