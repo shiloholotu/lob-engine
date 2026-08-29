@@ -67,6 +67,18 @@ Order* OrderBook::bestAskFront() {
     return nullptr;
 }
 
+const Order* OrderBook::bestBidFront() const {
+    if (!bids_.empty())
+        return &(bids_.begin()->second.front());
+    return nullptr;
+}
+
+const Order* OrderBook::bestAskFront() const {
+    if (!asks_.empty())
+        return &(asks_.begin()->second.front());
+    return nullptr;
+}
+
 
 void OrderBook::popBestBid() {
     auto& q = bids_.begin() -> second; // alias the queue of orders at best bid price

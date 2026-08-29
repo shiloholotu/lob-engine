@@ -18,9 +18,11 @@ public:
     void add(const Order& order); // pass by reference, unable to modify
     bool cancel(OrderId id); // pass by value, OrderId is just a uint64_t alias
 
-    // pointer to the first order in the deque, or nullptr if the deque is empty
+    // pointer to the first order in the deque, or nullptr if that side is empty
     Order* bestBidFront();
     Order* bestAskFront();
+    const Order* bestBidFront() const;
+    const Order* bestAskFront() const;
 
     void popBestBid();
     void popBestAsk();
