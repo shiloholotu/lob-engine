@@ -133,3 +133,21 @@ TEST(Matching, MarketAgainstEmptyBook) {
     EXPECT_FALSE(engine.book().bestAsk().has_value());
 }
 
+TEST(Matching, PriceTimePriorityFifo) {
+    MatchingEngine engine;
+    engine.submit(limitSell(1, 50, 3));
+    engine.submit(limitSell(2, 50, 3));
+    auto trades = engine.submit(limitBuy(3, 50, 4));
+
+    ASSERT_EQ(trades.size(), 2u);
+    EXPECT_EQ(trades[0].maker_id, 1);
+    EXPECT_EQ(trades[0].quantity, 3);
+    EXPECT_EQ(trades[1].maker_id, 2);
+    EXPECT_EQ(trades[1].quantity, 1);
+
+    const Order* ask = engine.book().bestAskFront();
+    ASSERT_NE(ask, nullptr);
+    EXPECT_EQ(ask->id, 2);
+    EXPECT_EQ(ask->quantity, 2);
+}
+
