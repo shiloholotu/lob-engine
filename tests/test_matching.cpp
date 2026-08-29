@@ -195,3 +195,14 @@ TEST(Matching, NoCrossBothRest) {
     EXPECT_EQ(*engine.book().bestAsk(), 101);
 }
 
+TEST(Matching, PriceImprovementUsesMakerPrice) {
+    MatchingEngine engine;
+    engine.submit(limitSell(1, 101, 10));
+    auto trades = engine.submit(limitBuy(2, 105, 10));
+
+    ASSERT_EQ(trades.size(), 1u);
+    EXPECT_EQ(trades[0].price, 101);
+    EXPECT_FALSE(engine.book().bestBid().has_value());
+    EXPECT_FALSE(engine.book().bestAsk().has_value());
+}
+
