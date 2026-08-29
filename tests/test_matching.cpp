@@ -31,3 +31,23 @@ TEST(Matching, FullFill) {
     EXPECT_FALSE(engine.book().bestAsk().has_value());
 }
 
+TEST(Matching, PartialFillRests) {
+    MatchingEngine engine;
+    engine.submit(limitSell(1, 101, 5));
+    auto trades = engine.submit(limitBuy(2, 101, 12));
+
+    ASSERT_EQ(trades.size(), 1u);
+    EXPECT_EQ(trades[0].maker_id, 1);
+    EXPECT_EQ(trades[0].taker_id, 2);
+    EXPECT_EQ(trades[0].price, 101);
+    EXPECT_EQ(trades[0].quantity, 5);
+
+    ASSERT_TRUE(engine.book().bestBid().has_value());
+    EXPECT_EQ(*engine.book().bestBid(), 101);
+    const Order* bid = engine.book().bestBidFront();
+    ASSERT_NE(bid, nullptr);
+    EXPECT_EQ(bid->id, 2);
+    EXPECT_EQ(bid->quantity, 7);
+    EXPECT_FALSE(engine.book().bestAsk().has_value());
+}
+
