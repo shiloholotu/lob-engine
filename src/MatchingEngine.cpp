@@ -1,4 +1,5 @@
 #include "MatchingEngine.h"
+#include <algorithm>
 
 std::vector<Trade> MatchingEngine::submit(Order order) {
     if (order.quantity <= 0) return {};
