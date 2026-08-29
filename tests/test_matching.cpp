@@ -51,3 +51,28 @@ TEST(Matching, PartialFillRests) {
     EXPECT_FALSE(engine.book().bestAsk().has_value());
 }
 
+TEST(Matching, MultiLevelCross) {
+    MatchingEngine engine;
+    engine.submit(limitSell(10, 101, 4));
+    engine.submit(limitSell(11, 102, 4));
+    auto trades = engine.submit(limitBuy(20, 102, 6));
+
+    ASSERT_EQ(trades.size(), 2u);
+    EXPECT_EQ(trades[0].maker_id, 10);
+    EXPECT_EQ(trades[0].taker_id, 20);
+    EXPECT_EQ(trades[0].price, 101);
+    EXPECT_EQ(trades[0].quantity, 4);
+    EXPECT_EQ(trades[1].maker_id, 11);
+    EXPECT_EQ(trades[1].taker_id, 20);
+    EXPECT_EQ(trades[1].price, 102);
+    EXPECT_EQ(trades[1].quantity, 2);
+
+    EXPECT_FALSE(engine.book().bestBid().has_value());
+    ASSERT_TRUE(engine.book().bestAsk().has_value());
+    EXPECT_EQ(*engine.book().bestAsk(), 102);
+    const Order* ask = engine.book().bestAskFront();
+    ASSERT_NE(ask, nullptr);
+    EXPECT_EQ(ask->id, 11);
+    EXPECT_EQ(ask->quantity, 2);
+}
+
