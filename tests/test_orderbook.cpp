@@ -18,3 +18,12 @@ TEST(OrderBook, AddBuySetsBestBid) {
     EXPECT_FALSE(book.bestAsk().has_value());
 }
 
+TEST(OrderBook, BestBidIsHighestPrice) {
+    OrderBook book;
+    book.add(buy(1, 100, 10));
+    book.add(buy(2, 105, 4));
+
+    ASSERT_TRUE(book.bestBid().has_value());
+    EXPECT_EQ(*book.bestBid(), 105);
+}
+
