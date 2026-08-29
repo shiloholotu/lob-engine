@@ -182,3 +182,16 @@ TEST(Matching, MarketLeftoverDropped) {
     EXPECT_FALSE(engine.book().bestAsk().has_value());
 }
 
+TEST(Matching, NoCrossBothRest) {
+    MatchingEngine engine;
+    auto buyTrades = engine.submit(limitBuy(1, 100, 10));
+    auto sellTrades = engine.submit(limitSell(2, 101, 10));
+
+    EXPECT_TRUE(buyTrades.empty());
+    EXPECT_TRUE(sellTrades.empty());
+    ASSERT_TRUE(engine.book().bestBid().has_value());
+    EXPECT_EQ(*engine.book().bestBid(), 100);
+    ASSERT_TRUE(engine.book().bestAsk().has_value());
+    EXPECT_EQ(*engine.book().bestAsk(), 101);
+}
+
