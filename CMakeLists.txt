@@ -7,7 +7,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_executable(lob_engine
     src/main.cpp
     src/OrderBook.cpp
+    src/MapOrderBook.cpp
     src/MatchingEngine.cpp
+    src/OrderPool.cpp
 )
 target_include_directories(lob_engine PRIVATE include)
 
@@ -25,8 +27,10 @@ add_executable(lob_tests
     tests/test_smoke.cpp
     tests/test_orderbook.cpp
     tests/test_matching.cpp
+    tests/test_orderpool.cpp
     src/OrderBook.cpp
     src/MatchingEngine.cpp
+    src/OrderPool.cpp
 )
 target_include_directories(lob_tests PRIVATE include)
 target_link_libraries(lob_tests PRIVATE GTest::gtest GTest::gtest_main)
@@ -41,5 +45,9 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(benchmark)
 
-add_executable(lob_bench bench/bench_smoke.cpp)
+add_executable(lob_bench
+    bench/bench_smoke.cpp
+    src/MapOrderBook.cpp
+)
+target_include_directories(lob_bench PRIVATE include)
 target_link_libraries(lob_bench PRIVATE benchmark::benchmark)
