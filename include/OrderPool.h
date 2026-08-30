@@ -2,7 +2,6 @@
 
 #include "Order.h"
 
-#include <array>
 #include <cstddef>
 #include <vector>
 
@@ -14,6 +13,6 @@ public:
     void deallocate(Order* o);
 
 private:
-    std::array<Order, kMaxOrders> slots_{}; // list of orders
+    std::vector<Order> slots_; // heap buffer so OrderBook can live on the stack
     std::vector<std::size_t> free_; // list of unused slots
 };

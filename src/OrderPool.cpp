@@ -1,7 +1,8 @@
 #include "OrderPool.h"
 
-OrderPool::OrderPool(){
-    for(std::size_t i = 0; i < kMaxOrders; ++i){
+OrderPool::OrderPool() : slots_(kMaxOrders) {
+    free_.reserve(kMaxOrders);
+    for (std::size_t i = 0; i < kMaxOrders; ++i) {
         free_.push_back(i);
     }
 }

@@ -53,3 +53,9 @@ TEST(OrderBook, CancelUnknownId) {
     OrderBook book;
     EXPECT_FALSE(book.cancel(999));
 }
+
+TEST(OrderBook, OutOfRangeRestDoesNotBecomeBestBid) {
+    OrderBook book;
+    book.add(buy(1, OrderBook::kMinPrice + OrderBook::kPriceRange, 10));
+    EXPECT_FALSE(book.bestBid().has_value());
+}

@@ -1,12 +1,38 @@
 #include "OrderBook.h"
 
+bool OrderBook::inRange(Price price) const {
+    return price >= kMinPrice && price < kMinPrice + kPriceRange;
+}
+
+int OrderBook::indexOf(Price price) const {
+    return static_cast<int>(price - kMinPrice);
+}
+
+Price OrderBook::priceOf(int index) const {
+    return kMinPrice + index;
+}
+
 void OrderBook::add(const Order& order) {
-    // order is a read only alias of the caller's order
-    if (order.side == Side::Buy)
-        bids_[order.price].push_back(order); // copy the order into the deque
-    else
-        asks_[order.price].push_back(order); // copy the order into the deque
-    orderIndex_[order.id] = { order.side, order.price }; // save the location of the order in the book
+    // return if the price is out of range
+    if (!inRange(order.price))
+        return;
+    int i = indexOf(order.price);
+    // get a slot for the order
+    Order* slot = pool_.allocate();
+    if (slot == nullptr)
+        return;
+    *slot = order; // copy the order into the slot
+    if(order.side == Side::Buy){
+        bidLevels_[i].orders.push_back(slot); // add the order to the price level
+        if(!bestBidIndex_ || i > *bestBidIndex_) // update the best bid index if it is not set or the new price is higher
+            bestBidIndex_ = i;
+    }
+    else{
+        askLevels_[i].orders.push_back(slot);
+        if(!bestAskIndex_ || i < *bestAskIndex_)
+            bestAskIndex_ = i;
+    }
+    orderIndex_[order.id] = { order.side, order.price, slot }; // add the order to the index
 }
 
 bool OrderBook::cancel(OrderId id) {
@@ -14,98 +40,112 @@ bool OrderBook::cancel(OrderId id) {
     auto idx = orderIndex_.find(id);
     if (idx == orderIndex_.end())
         return false;
-
     // save its location and then remove it from the index
     OrderLocation loc = idx->second;
     orderIndex_.erase(idx);
 
+    int i = indexOf(loc.price);
     if (loc.side == Side::Buy) {
-        // find the deque of orders at the order's price
-        auto pit = bids_.find(loc.price);
-        if (pit == bids_.end())
-            return false;
-        auto& q = pit->second;
-        // find the order in the deque and remove it
-        for (auto oit = q.begin(); oit != q.end(); ++oit) {
-            if (oit->id == id) {
+        auto& q = bidLevels_[i].orders; // find the deque of orders at the order's price level
+        for (auto oit = q.begin(); oit != q.end(); ++oit) { // find the pointer to the order in the deque and remove it
+            if (*oit == loc.ptr) {
                 q.erase(oit);
                 break;
             }
         }
-        // if the queue is empty, remove the price from the map
-        if (q.empty())
-            bids_.erase(pit);
+        if (q.empty() && bestBidIndex_ == i) // if the deque is empty and the order was the best bid, recompute the best bid
+            recomputeBestBidFrom(i);
     } else {
-        auto pit = asks_.find(loc.price);
-        if (pit == asks_.end())
-            return false;
-        auto& q = pit->second;
+        auto& q = askLevels_[i].orders;
         for (auto oit = q.begin(); oit != q.end(); ++oit) {
-            if (oit->id == id) {
+            if (*oit == loc.ptr) {
                 q.erase(oit);
                 break;
             }
         }
-        if (q.empty())
-            asks_.erase(pit);
+        if (q.empty() && bestAskIndex_ == i)
+            recomputeBestAskFrom(i);
     }
+    pool_.deallocate(loc.ptr);
     return true;
 }
 
-Order* OrderBook::bestBidFront() {
-    if (!bids_.empty()){
-        return &(bids_.begin()->second.front());
-         // -> second.front() is the first order in the deque,
-         // & is so we return a pointer, so the engine can modify the order
+void OrderBook::recomputeBestBidFrom(int i) {
+    // level i just emptied; walk down to the next occupied bid (higher prices are better)
+    bestBidIndex_.reset();
+    for (int j = i - 1; j >= 0; --j) {
+        if (!bidLevels_[j].orders.empty()) {
+            bestBidIndex_ = j;
+            break;
+        }
     }
-    return nullptr;
+}
+
+void OrderBook::recomputeBestAskFrom(int i) {
+    // level i just emptied; walk up to the next occupied ask (lower prices are better)
+    bestAskIndex_.reset();
+    for (int j = i + 1; j < kPriceRange; ++j) {
+        if (!askLevels_[j].orders.empty()) {
+            bestAskIndex_ = j;
+            break;
+        }
+    }
+}
+
+Order* OrderBook::bestBidFront() {
+    if (!bestBidIndex_)
+        return nullptr;
+    // deque already stores Order* into the pool
+    return bidLevels_[*bestBidIndex_].orders.front();
 }
 
 Order* OrderBook::bestAskFront() {
-    if (!asks_.empty())
-        return &(asks_.begin()->second.front());
-    return nullptr;
+    if (!bestAskIndex_)
+        return nullptr;
+    return askLevels_[*bestAskIndex_].orders.front();
 }
 
 const Order* OrderBook::bestBidFront() const {
-    if (!bids_.empty())
-        return &(bids_.begin()->second.front());
-    return nullptr;
+    if (!bestBidIndex_)
+        return nullptr;
+    return bidLevels_[*bestBidIndex_].orders.front();
 }
 
 const Order* OrderBook::bestAskFront() const {
-    if (!asks_.empty())
-        return &(asks_.begin()->second.front());
-    return nullptr;
+    if (!bestAskIndex_)
+        return nullptr;
+    return askLevels_[*bestAskIndex_].orders.front();
 }
 
-
 void OrderBook::popBestBid() {
-    auto& q = bids_.begin() -> second; // alias the queue of orders at best bid price
-    OrderId id = q.front().id; // get the id of the first order
-    q.pop_front(); // remove it
-    orderIndex_.erase(id); // remove the order from the index
+    auto& q = bidLevels_[*bestBidIndex_].orders;
+    Order* p = q.front();
+    q.pop_front();
+    orderIndex_.erase(p->id);
+    pool_.deallocate(p); // return the slot so later adds can reuse it
     if (q.empty())
-        bids_.erase(bids_.begin()); // if it was the only order at that price, remove the price from the map
+        recomputeBestBidFrom(*bestBidIndex_); // last order at the touch: find the next best bid
 }
 
 void OrderBook::popBestAsk() {
-    auto& q = asks_.begin() -> second;
-    OrderId id = q.front().id;
+    auto& q = askLevels_[*bestAskIndex_].orders;
+    Order* p = q.front();
     q.pop_front();
-    orderIndex_.erase(id);
+    orderIndex_.erase(p->id);
+    pool_.deallocate(p);
     if (q.empty())
-        asks_.erase(asks_.begin());
+        recomputeBestAskFrom(*bestAskIndex_);
 }
 
 std::optional<Price> OrderBook::bestBid() const {
-    if (!bids_.empty())
-        return bids_.begin()->first;
+    // cached index — do not scan the array
+    if (bestBidIndex_)
+        return priceOf(*bestBidIndex_);
     return std::nullopt;
 }
 
 std::optional<Price> OrderBook::bestAsk() const {
-    if (!asks_.empty())
-        return asks_.begin()->first;
+    if (bestAskIndex_)
+        return priceOf(*bestAskIndex_);
     return std::nullopt;
 }
