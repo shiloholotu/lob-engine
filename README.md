@@ -22,3 +22,7 @@ Cancel still uses an `unordered_map` from id to `{side, price, pointer}`, then a
 
 The original book (`MapOrderBook`) is a `std::map` of price → `deque<Order>`. It is compiled into the benchmark binary only, so insert/cancel/match can be compared against the array layout without changing matching rules.
 
+### Price range
+
+Legal resting prices are `[0, 10000)`. `add` ignores an order whose price is outside that band; it does not become best bid or best ask. Crossing an out-of-range limit against the live book is a matching-policy question that this engine does not special-case: a limit that never rests simply will not sit on the book.
+
