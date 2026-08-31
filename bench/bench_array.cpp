@@ -52,7 +52,24 @@ static void BM_ArrayCancel(benchmark::State& state) {
 // Prefill N consecutive asks (100 .. 100+N-1) plus a sentinel at 100+N so the
 // last pop does not scan the rest of PRICE_RANGE. Timed work is one buy that
 // walks those N ticks — the case where an array of levels should beat a tree.
+static void BM_ArrayMatch(benchmark::State& state) {
+    const int N = static_cast<int>(state.range(0));
+    for (auto _ : state) {
+        state.PauseTiming();
+        MatchingEngine engine;
+        for (int i = 0; i < N; ++i) {
+            engine.submit(limitSell(static_cast<OrderId>(i + 1), 100 + i, 1));
+        }
+        engine.submit(limitSell(static_cast<OrderId>(N + 1), 100 + N, 1));
+        state.ResumeTiming();
+        auto trades = engine.submit(
+            limitBuy(static_cast<OrderId>(N + 2), 100 + N - 1, N));
+        benchmark::DoNotOptimize(trades.size());
+    }
+}
+
 BENCHMARK(BM_ArrayInsert)->Arg(1000);
 BENCHMARK(BM_ArrayCancel)->Arg(1000);
+BENCHMARK(BM_ArrayMatch)->Arg(1000);
 
 BENCHMARK_MAIN();
