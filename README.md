@@ -26,3 +26,23 @@ The original book (`MapOrderBook`) is a `std::map` of price → `deque<Order>`. 
 
 Legal resting prices are `[0, 10000)`. `add` ignores an order whose price is outside that band; it does not become best bid or best ask. Crossing an out-of-range limit against the live book is a matching-policy question that this engine does not special-case: a limit that never rests simply will not sit on the book.
 
+## Benchmarks
+
+Google Benchmark, **Release**, `--benchmark_min_time=0.5s`, 12 × 2592 MHz CPUs. Each row is one batch of **N = 1000** operations (not a single order). Times are wall time.
+
+| Version | Insert | Cancel | Match |
+|---|---|---|---|
+| Array + pool | 61,590 ns | 47,714 ns | 678,357 ns |
+| `std::map` + deque | 265,293 ns | 159,334 ns | 145,341 ns |
+
+On this machine the array book is about **4× faster on insert** and **3× faster on cancel**. Matching a buy that walks 1,000 consecutive ask levels is **slower** on the array book.
+
+Insert and cancel benefit from contiguous levels and pool slots instead of tree nodes. The match bench builds a fresh engine every iteration (10,000 deques plus a 100k-slot pool) and then pops a thousand levels, so construction and best-index walks dominate. The map book is a small tree; that workload does not favor the array. Those numbers are included on purpose — the layout change is not a blanket speedup.
+
+Run them:
+
+```powershell
+cmake --build build --config Release --target lob_bench
+.\build\Release\lob_bench.exe --benchmark_min_time=0.5s
+```
+
