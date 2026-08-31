@@ -32,6 +32,27 @@ static void BM_ArrayInsert(benchmark::State& state) {
     }
 }
 
+static void BM_ArrayCancel(benchmark::State& state) {
+    const int N = static_cast<int>(state.range(0));
+    OrderBook book;
+    for (auto _ : state) {
+        state.PauseTiming();
+        for (int i = 0; i < N; ++i) {
+            book.add(limitBuy(static_cast<OrderId>(i + 1), 100 + i, 1));
+        }
+        state.ResumeTiming();
+        bool ok = true;
+        for (int i = 0; i < N; ++i) {
+            ok = book.cancel(static_cast<OrderId>(i + 1)) && ok;
+        }
+        benchmark::DoNotOptimize(ok);
+    }
+}
+
+// Prefill N consecutive asks (100 .. 100+N-1) plus a sentinel at 100+N so the
+// last pop does not scan the rest of PRICE_RANGE. Timed work is one buy that
+// walks those N ticks — the case where an array of levels should beat a tree.
 BENCHMARK(BM_ArrayInsert)->Arg(1000);
+BENCHMARK(BM_ArrayCancel)->Arg(1000);
 
 BENCHMARK_MAIN();
