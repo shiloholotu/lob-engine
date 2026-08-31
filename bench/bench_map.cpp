@@ -27,4 +27,22 @@ static void BM_MapInsert(benchmark::State& state) {
     }
 }
 
+static void BM_MapCancel(benchmark::State& state) {
+    const int N = static_cast<int>(state.range(0));
+    MapOrderBook book;
+    for (auto _ : state) {
+        state.PauseTiming();
+        for (int i = 0; i < N; ++i) {
+            book.add(limitBuy(static_cast<OrderId>(i + 1), 100 + i, 1));
+        }
+        state.ResumeTiming();
+        bool ok = true;
+        for (int i = 0; i < N; ++i) {
+            ok = book.cancel(static_cast<OrderId>(i + 1)) && ok;
+        }
+        benchmark::DoNotOptimize(ok);
+    }
+}
+
 BENCHMARK(BM_MapInsert)->Arg(1000);
+BENCHMARK(BM_MapCancel)->Arg(1000);
