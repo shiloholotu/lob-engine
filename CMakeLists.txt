@@ -46,8 +46,13 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(benchmark)
 
 add_executable(lob_bench
-    bench/bench_smoke.cpp
+    bench/bench_array.cpp
+    bench/bench_map.cpp
+    src/OrderBook.cpp
     src/MapOrderBook.cpp
+    src/OrderPool.cpp
+    src/MatchingEngine.cpp
+    src/MapMatchingEngine.cpp
 )
 target_include_directories(lob_bench PRIVATE include)
 target_link_libraries(lob_bench PRIVATE benchmark::benchmark)
