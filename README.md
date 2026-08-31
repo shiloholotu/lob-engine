@@ -46,3 +46,20 @@ cmake --build build --config Release --target lob_bench
 .\build\Release\lob_bench.exe --benchmark_min_time=0.5s
 ```
 
+## Tests
+
+Google Test covers book invariants (best bid/ask, FIFO, cancel, out-of-range rest), pool allocate/free, and matching (full fill, partial fill, multi-level crosses, market orders, cancel).
+
+```powershell
+cmake --build build --config Debug --target lob_tests
+.\build\Debug\lob_tests.exe
+```
+
+## Build
+
+C++20, CMake 3.20+, and a compiler that can build Google Test and Google Benchmark (MSVC 2022, GCC 11+, or Clang 14+). Dependencies are pulled with FetchContent; no extra install step.
+
+```powershell
+cmake -S . -B build
+cmake --build build --config Debug
+```
