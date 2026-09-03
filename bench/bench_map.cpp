@@ -46,9 +46,10 @@ static void BM_MapCancel(benchmark::State& state) {
 
 static void BM_MapMatch(benchmark::State& state) {
     const int N = static_cast<int>(state.range(0));
+    MapMatchingEngine engine;
     for (auto _ : state) {
         state.PauseTiming();
-        MapMatchingEngine engine;
+        engine.reset();
         for (int i = 0; i < N; ++i) {
             engine.submit(limitSell(static_cast<OrderId>(i + 1), 100 + i, 1));
         }

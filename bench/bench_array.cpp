@@ -54,9 +54,10 @@ static void BM_ArrayCancel(benchmark::State& state) {
 // walks those N ticks — the case where an array of levels should beat a tree.
 static void BM_ArrayMatch(benchmark::State& state) {
     const int N = static_cast<int>(state.range(0));
+    MatchingEngine engine;
     for (auto _ : state) {
         state.PauseTiming();
-        MatchingEngine engine;
+        engine.reset();
         for (int i = 0; i < N; ++i) {
             engine.submit(limitSell(static_cast<OrderId>(i + 1), 100 + i, 1));
         }
