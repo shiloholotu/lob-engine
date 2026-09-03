@@ -30,14 +30,25 @@ Legal resting prices are `[0, 10000)`. `add` ignores an order whose price is out
 
 Google Benchmark, **Release**, `--benchmark_min_time=0.5s`, 12 × 2592 MHz CPUs. Each row is one batch of **N = 1000** operations (not a single order). Times are wall time.
 
+Insert and cancel reuse one book for the whole run. Match reuses one engine: `reset()` and prefill run under `PauseTiming`; the timed work is a buy that walks 1,000 consecutive ask levels.
+
+| Version | Insert | Cancel | Match |
+|---|---|---|---|
+| Array + pool | 62,260 ns | 48,399 ns | 85,787 ns |
+| `std::map` + deque | 297,496 ns | 174,570 ns | 168,387 ns |
+
+On this machine the array book is about **5× faster on insert**, **4× faster on cancel**, and **2× faster on match**. Insert and cancel benefit from contiguous levels and pool slots instead of tree nodes. Match benefits once the book is already constructed: level lookup is an index, not a tree walk.
+
+### Earlier match numbers (unfair setup)
+
+The first match bench constructed a **new engine every iteration** (10,000 deques plus a 100k-slot pool). Construction sat in `PauseTiming`, so it did not appear in the Time column, but it still filled the cache with empty levels and unused pool slots before the timed `submit`. The map book is a small tree, so it started that window hot. Insert and cancel already reused one book, which is why only match looked inverted.
+
 | Version | Insert | Cancel | Match |
 |---|---|---|---|
 | Array + pool | 61,590 ns | 47,714 ns | 678,357 ns |
 | `std::map` + deque | 265,293 ns | 159,334 ns | 145,341 ns |
 
-On this machine the array book is about **4× faster on insert** and **3× faster on cancel**. Matching a buy that walks 1,000 consecutive ask levels is **slower** on the array book.
-
-Insert and cancel benefit from contiguous levels and pool slots instead of tree nodes. The match bench builds a fresh engine every iteration (10,000 deques plus a 100k-slot pool) and then pops a thousand levels, so construction and best-index walks dominate. The map book is a small tree; that workload does not favor the array. Those numbers are included on purpose — the layout change is not a blanket speedup.
+Same machine, Release, N = 1000. Insert/cancel were already comparable to the fair table. Match on the array book dropped from **678 µs to 86 µs** after reusing one engine and calling `reset()` between iterations. The layout did not change; the measurement did.
 
 Run them:
 
