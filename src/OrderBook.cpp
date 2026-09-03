@@ -149,3 +149,15 @@ std::optional<Price> OrderBook::bestAsk() const {
         return priceOf(*bestAskIndex_);
     return std::nullopt;
 }
+
+void OrderBook::reset() {
+    // get ids out of orderIndex_
+    std::vector<OrderId> ids;
+    for (auto& [id, loc] : orderIndex_) {
+        ids.push_back(id);
+    }
+    // call cancel for each id
+    for (auto id : ids) {
+        cancel(id);
+    }
+}
