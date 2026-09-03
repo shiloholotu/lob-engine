@@ -109,3 +109,9 @@ std::optional<Price> MapOrderBook::bestAsk() const {
         return asks_.begin()->first;
     return std::nullopt;
 }
+
+void MapOrderBook::reset() {
+    bids_.clear();
+    asks_.clear();
+    orderIndex_.clear();
+}

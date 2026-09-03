@@ -30,6 +30,8 @@ public:
     std::optional<Price> bestBid() const; // const means the method does not modify the object
     std::optional<Price> bestAsk() const;
 
+    void reset();
+
 private:
     std::map<Price, std::deque<Order>, std::greater<Price>> bids_; // map of price and deque of orders, sorted from highest to lowest
     std::map<Price, std::deque<Order>>                      asks_; // map of price and deque of orders, sorted from lowest to highest by default
