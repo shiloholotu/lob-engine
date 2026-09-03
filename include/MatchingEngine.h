@@ -18,7 +18,7 @@ public:
     bool cancel(OrderId id);
 
     const OrderBook& book() const { return book_; } // peek at the book without modifying it
-
+    void reset();
 private:
     OrderBook book_;
 };

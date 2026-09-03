@@ -37,3 +37,7 @@ std::vector<Trade> MapMatchingEngine::submit(Order order) {
 bool MapMatchingEngine::cancel(OrderId id) {
     return book_.cancel(id);
 }
+
+void MapMatchingEngine::reset() {
+    book_.reset();
+}

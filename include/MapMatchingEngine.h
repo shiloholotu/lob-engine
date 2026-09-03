@@ -18,6 +18,7 @@ public:
     bool cancel(OrderId id);
 
     const MapOrderBook& book() const { return book_; } // peek at the book without modifying it
+    void reset();
 
 private:
     MapOrderBook book_;

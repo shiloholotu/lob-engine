@@ -37,3 +37,7 @@ std::vector<Trade> MatchingEngine::submit(Order order) {
 bool MatchingEngine::cancel(OrderId id) {
     return book_.cancel(id);
 }
+
+void MatchingEngine::reset() {
+    book_.reset();
+}
