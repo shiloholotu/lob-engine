@@ -43,6 +43,8 @@ public:
     std::optional<Price> bestBid() const; // const means the method does not modify the object
     std::optional<Price> bestAsk() const;
 
+    void reset();
+
 private:
     OrderPool pool_;
     std::vector<PriceLevel> bidLevels_ = std::vector<PriceLevel>(kPriceRange);
